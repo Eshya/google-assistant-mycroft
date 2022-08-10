@@ -190,7 +190,7 @@ class SampleAssistant(object):
         logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
         # Load OAuth 2.0 credentials.
         try:
-            with open('/data/gva-mycroft.json', 'r') as json_file:
+            with open('/home/eshya/Documents/smartSpeaker/google-assistant/gva-mycroft.json', 'r') as json_file:
                 gva_config = json.load(json_file)
                 project_id = gva_config["project_id"]
                 device_model_id = gva_config["device_model_id"]

@@ -1,0 +1,11 @@
+{
+    "project_id":"",
+    "device_model_id":"",
+    "device_id":"",
+    "credentials":"",
+    "device_config":"",
+    "engine_path":"",
+    "model_path":"",
+    "trigger_level":"",
+    "sensitivity":""
+}
