@@ -82,7 +82,8 @@ class SampleAssistant(object):
         self.conversation_stream.volume_percentage = 100
         self.conversation_stream.start_recording()
         logging.info('Recording audio request.')
-        call(["adk-message-send", "led_indicate_direction_pattern{pattern:1,direction:50}"])
+        call(["echo", "led_indicate_direction_pattern{pattern:1,direction:50}"])
+        # call(["adk-message-send", "led_indicate_direction_pattern{pattern:1,direction:50}"])
 
         def iter_log_assist_requests():
             for c in self.gen_assist_requests():
@@ -97,7 +98,8 @@ class SampleAssistant(object):
                 if resp.event_type == END_OF_UTTERANCE:
                     logging.info('End of audio request detected.')
                     logging.info('Stopping recording.')
-                    call(["adk-message-send", "led_start_pattern{pattern:16}"])
+                    call(["echo", "led_start_pattern{pattern:16}"])
+                    # call(["adk-message-send", "led_start_pattern{pattern:16}"])
                     self.conversation_stream.stop_recording()
                 if resp.speech_results:
                     logging.info('Transcript of user request: "%s".', ' '.join(r.transcript for r in resp.speech_results))
@@ -106,7 +108,8 @@ class SampleAssistant(object):
                         self.conversation_stream.stop_recording()
                         self.conversation_stream.start_playback()
                         logging.info('Playing assistant response.')
-                        call(["adk-message-send", "led_start_pattern{pattern:2}"])
+                        call(["echo", "led_start_pattern{pattern:2}"])
+                        # call(["adk-message-send", "led_start_pattern{pattern:2}"])
                     self.conversation_stream.write(resp.audio_out.audio_data)
                 if resp.dialog_state_out.conversation_state:
                     conversation_state = resp.dialog_state_out.conversation_state
@@ -123,7 +126,8 @@ class SampleAssistant(object):
                     continue_conversation = False
 
                 logging.info('Finished playing assistant response.')
-                call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+                call(["echo", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+                # call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
                 self.conversation_stream.stop_playback()
                 return continue_conversation
     def gen_assist_requests(self):
@@ -158,155 +162,157 @@ class SampleAssistant(object):
             # Subsequent requests need audio data, but not config.
             yield embedded_assistant_pb2.AssistRequest(audio_in=data)
 
-    def on_act():
-        global waiting
-        waiting = 0
+   
+def on_act():
+    global waiting
+    waiting = 0
+    
+def main():
+    """Samples for the Google Assistant API.
+    Examples:
+    Run the sample with microphone input and speaker output:
+        $ python -m googlesamples.assistant
+    Run the sample with file input and speaker output:
+        $ python -m googlesamples.assistant -i <input file>
+    Run the sample with file input and output:
+        $ python -m googlesamples.assistant -i <input file> -o <output file>
+    """
 
-    def main():
-        """Samples for the Google Assistant API.
-        Examples:
-        Run the sample with microphone input and speaker output:
-            $ python -m googlesamples.assistant
-        Run the sample with file input and speaker output:
-            $ python -m googlesamples.assistant -i <input file>
-        Run the sample with file input and output:
-            $ python -m googlesamples.assistant -i <input file> -o <output file>
-        """
+    # Google Assistant Setting.
+    api_endpoint = ASSISTANT_API_ENDPOINT
+    lang = 'en-US'
+    grpc_deadline = DEFAULT_GRPC_DEADLINE
 
-        # Google Assistant Setting.
-        api_endpoint = ASSISTANT_API_ENDPOINT
-        lang = 'en-US'
-        grpc_deadline = DEFAULT_GRPC_DEADLINE
+    # Audio Setting.
+    audio_sample_rate = audio_helpers.DEFAULT_AUDIO_SAMPLE_RATE
+    audio_sample_width = audio_helpers.DEFAULT_AUDIO_SAMPLE_WIDTH
+    audio_iter_size = audio_helpers.DEFAULT_AUDIO_ITER_SIZE
+    audio_block_size = audio_helpers.DEFAULT_AUDIO_DEVICE_BLOCK_SIZE
+    audio_flush_size = audio_helpers.DEFAULT_AUDIO_DEVICE_FLUSH_SIZE
 
-        # Audio Setting.
-        audio_sample_rate = audio_helpers.DEFAULT_AUDIO_SAMPLE_RATE
-        audio_sample_width = audio_helpers.DEFAULT_AUDIO_SAMPLE_WIDTH
-        audio_iter_size = audio_helpers.DEFAULT_AUDIO_ITER_SIZE
-        audio_block_size = audio_helpers.DEFAULT_AUDIO_DEVICE_BLOCK_SIZE
-        audio_flush_size = audio_helpers.DEFAULT_AUDIO_DEVICE_FLUSH_SIZE
+    # Setup logging.
+    verbose = False
+    logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
+    # Load OAuth 2.0 credentials.
+    try:
+        with open('/home/eshya/Documents/smartSpeaker/google-assistant/gva-mycroft.json', 'r') as json_file:
+            gva_config = json.load(json_file)
+            project_id = gva_config["project_id"]
+            device_model_id = gva_config["device_model_id"]
+            device_id = gva_config["device_id"]
+            credentials = gva_config["credentials"]
+            device_config = gva_config["device_config"]
+            engine_path = gva_config["engine_path"]
+            model_path = gva_config["model_path"]
+            trigger_level = gva_config["trigger_level"]
+            sensitivity = gva_config["sensitivity"]
+    except Exception as e:
+        logging.error("Error loading gva-mycroft.json: %s", e)
+        sys.exit(-1)
+    try:
+        with open(credentials, 'r') as f:
+            credentials = google.oauth2.credentials.Credentials(token=None, **json.load(f))
+            http_request = google.auth.transport.requests.Request()
+            credentials.refresh(http_request)
+    except Exception as e:
+        logging.error('Error loading credentials: %s', e)
+        logging.error('Run google-oauthlib-tool to initialize new OAuth 2.0 credentials.')
+        sys.exit(-1)
 
-        # Setup logging.
-        verbose = False
-        logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
-        # Load OAuth 2.0 credentials.
-        try:
-            with open('/home/eshya/Documents/smartSpeaker/google-assistant/gva-mycroft.json', 'r') as json_file:
-                gva_config = json.load(json_file)
-                project_id = gva_config["project_id"]
-                device_model_id = gva_config["device_model_id"]
-                device_id = gva_config["device_id"]
-                credentials = gva_config["credentials"]
-                device_config = gva_config["device_config"]
-                engine_path = gva_config["engine_path"]
-                model_path = gva_config["model_path"]
-                trigger_level = gva_config["trigger_level"]
-                sensitivity = gva_config["sensitivity"]
-        except Exception as e:
-            logging.error("Error loading gva-mycroft.json: %s", e)
-            sys.exit(-1)
-        try:
-            with open(credentials, 'r') as f:
-                credentials = google.oauth2.credentials.Credentials(token=None, **json.load(f))
-                http_request = google.auth.transport.requests.Request()
-                credentials.refresh(http_request)
-        except Exception as e:
-            logging.error('Error loading credentials: %s', e)
-            logging.error('Run google-oauthlib-tool to initialize new OAuth 2.0 credentials.')
-            sys.exit(-1)
+    # Create an authorized gRPC channel.
+    grpc_channel = google.auth.transport.grpc.secure_authorized_channel(credentials, http_request, api_endpoint)
+    logging.info('Connecting to %s', api_endpoint)
 
-        # Create an authorized gRPC channel.
-        grpc_channel = google.auth.transport.grpc.secure_authorized_channel(credentials, http_request, api_endpoint)
-        logging.info('Connecting to %s', api_endpoint)
-
-        # Configure audio source and sink.
-        audio_device = None
-        audio_source = audio_device = (
-            audio_device or audio_helpers.SoundDeviceStream(
-                sample_rate=audio_sample_rate,
-                sample_width=audio_sample_width,
-                block_size=audio_block_size,
-                flush_size=audio_flush_size
-            )
-        )
-        audio_sink = audio_device = (
-            audio_device or audio_helpers.SoundDeviceStream(
-                sample_rate=audio_sample_rate,
-                sample_width=audio_sample_width,
-                block_size=audio_block_size,
-                flush_size=audio_flush_size
-            )
-        )
-        # Create conversation stream with the given audio source and sink.
-        conversation_stream = audio_helpers.ConversationStream(
-            source=audio_source,
-            sink=audio_sink,
-            iter_size=audio_iter_size,
+    # Configure audio source and sink.
+    audio_device = None
+    audio_source = audio_device = (
+        audio_device or audio_helpers.SoundDeviceStream(
+            sample_rate=audio_sample_rate,
             sample_width=audio_sample_width,
+            block_size=audio_block_size,
+            flush_size=audio_flush_size
         )
+    )
+    audio_sink = audio_device = (
+        audio_device or audio_helpers.SoundDeviceStream(
+            sample_rate=audio_sample_rate,
+            sample_width=audio_sample_width,
+            block_size=audio_block_size,
+            flush_size=audio_flush_size
+        )
+    )
+    # Create conversation stream with the given audio source and sink.
+    conversation_stream = audio_helpers.ConversationStream(
+        source=audio_source,
+        sink=audio_sink,
+        iter_size=audio_iter_size,
+        sample_width=audio_sample_width,
+    )
 
-        if not device_id or not device_model_id:
-            try:
-                with open(device_config) as f:
-                    device = json.load(f)
-                    device_id = device['id']
-                    device_model_id = device['model_id']
-                    logging.info("Using device model %s and device id %s", device_model_id, device_id)
-            except Exception as e:
-                logging.warning('Device config not found: %s' % e)
-                logging.info('Registering device')
-                if not device_model_id:
-                    logging.error('Option --device-model-id required when registering a device instance.')
-                    sys.exit(-1)
-                if not project_id:
-                    logging.error('Option --project-id required when registering a device instance.')
-                    sys.exit(-1)
-                device_base_url = ('https://%s/v1alpha2/projects/%s/devices' % (api_endpoint, project_id))
-                device_id = str(uuid.uuid1())
-                payload = {
-                    'id': device_id,
-                    'model_id': device_model_id,
-                    'client_type': 'SDK_SERVICE'
-                }
-                session = google.auth.transport.requests.AuthorizedSession(credentials)
-                r = session.post(device_base_url, data=json.dumps(payload))
-                if r.status_code != 200:
-                    logging.error('Failed to register device: %s', r.text)
-                    sys.exit(-1)
-                logging.info('Device registered: %s', device_id)
-                pathlib.Path(os.path.dirname(device_config)).mkdir(exist_ok=True)
-                with open(device_config, 'w') as f:
-                    json.dump(payload, f)
+    if not device_id or not device_model_id:
         try:
-            # initiate precise engine with mycroft model
-            engine = PreciseEngine(engine_path, model_path)
-
-            # initiate precise runner that will listen, predict, and detect wakeword
-            runner = PreciseRunner(engine, on_activation=on_act, trigger_level=trigger_level, sensitivity=sensitivity)
-
-            # start runner
-            runner.start()
+            with open(device_config) as f:
+                device = json.load(f)
+                device_id = device['id']
+                device_model_id = device['model_id']
+                logging.info("Using device model %s and device id %s", device_model_id, device_id)
         except Exception as e:
-            logging.error("Wake Word Engine Error: %s", e)
-            sys.exit(-1)
+            logging.warning('Device config not found: %s' % e)
+            logging.info('Registering device')
+            if not device_model_id:
+                logging.error('Option --device-model-id required when registering a device instance.')
+                sys.exit(-1)
+            if not project_id:
+                logging.error('Option --project-id required when registering a device instance.')
+                sys.exit(-1)
+            device_base_url = ('https://%s/v1alpha2/projects/%s/devices' % (api_endpoint, project_id))
+            device_id = str(uuid.uuid1())
+            payload = {
+                'id': device_id,
+                'model_id': device_model_id,
+                'client_type': 'SDK_SERVICE'
+            }
+            session = google.auth.transport.requests.AuthorizedSession(credentials)
+            r = session.post(device_base_url, data=json.dumps(payload))
+            if r.status_code != 200:
+                logging.error('Failed to register device: %s', r.text)
+                sys.exit(-1)
+            logging.info('Device registered: %s', device_id)
+            pathlib.Path(os.path.dirname(device_config)).mkdir(exist_ok=True)
+            with open(device_config, 'w') as f:
+                json.dump(payload, f)
+    try:
+        # initiate precise engine with mycroft model
+        engine = PreciseEngine(engine_path, model_path)
+       
+        # initiate precise runner that will listen, predict, and detect wakeword
+        runner = PreciseRunner(engine, on_activation=on_act, trigger_level=trigger_level, sensitivity=sensitivity)
 
-            # keep main thread active until user interrupt
-        try:
-            with SampleAssistant(lang, device_model_id, device_id, conversation_stream, grpc_channel, grpc_deadline) as assistant:
-                wait_for_user_trigger = True
-                global waiting
-                call(["adk-message-send", "led_start_pattern{pattern:7}"])
-                while True:
-                    if wait_for_user_trigger:
-                        logging.info("Waiting Wake Word")
-                        while waiting == 1:
-                            pass
-                    continue_conversation = assistant.assist()
-                    wait_for_user_trigger = not continue_conversation
-                    waiting = 1
-        except Exception as e:
-            runner.stop()
-            logging.error("Google Assistant Error: %s", e)
-            sys.exit(-1)
+        # start runner
+        runner.start()
+    except Exception as e:
+        logging.error("Wake Word Engine Error: %s", e)
+        sys.exit(-1)
 
-    if __name__ == '__main__':
-        main()
+        # keep main thread active until user interrupt
+    try:
+        with SampleAssistant(lang, device_model_id, device_id, conversation_stream, grpc_channel, grpc_deadline) as assistant:
+            wait_for_user_trigger = True
+            global waiting
+            call(["echo", "led_start_pattern{pattern:7}"])
+            # call(["adk-message-send", "led_start_pattern{pattern:7}"])
+            while True:
+                if wait_for_user_trigger:
+                    logging.info("Waiting Wake Word")
+                    while waiting == 1:
+                        pass
+                continue_conversation = assistant.assist()
+                wait_for_user_trigger = not continue_conversation
+                waiting = 1
+    except Exception as e:
+        runner.stop()
+        logging.error("Google Assistant Error: %s", e)
+        sys.exit(-1)
+
+if __name__ == '__main__':
+    main()

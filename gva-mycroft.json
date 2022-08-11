@@ -1,11 +1,11 @@
 {
-    "project_id":"",
-    "device_model_id":"",
-    "device_id":"",
-    "credentials":"",
+    "project_id":"test-gva-93273",
+    "device_model_id":"test-gva-93273-smart-speaker-rdvcdn",
+    "device_id":"982794461635-3lvp764v1prdoi5ieo5obcbth1ovqv2i.apps.googleusercontent.com",
+    "credentials":"/home/eshya/.config/google-oauthlib-tool/credentials.json",
     "device_config":"",
-    "engine_path":"",
-    "model_path":"",
-    "trigger_level":"",
-    "sensitivity":""
+    "engine_path":"/home/eshya/Documents/smartSpeaker/mycroft-precise-engine-lite/dist/precise-engine/precise-engine",
+    "model_path":"/home/eshya/Documents/smartSpeaker/hi-indi/hey-indi4.tflite",
+    "trigger_level":"8",
+    "sensitivity":"0.5"
 }
