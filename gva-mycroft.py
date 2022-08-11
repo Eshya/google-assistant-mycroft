@@ -93,43 +93,44 @@ class SampleAssistant(object):
 
             # This generator yields AssistResponse proto messages
             # received from the gRPC Google Assistant API.
-            for resp in self.assistant.Assist(iter_log_assist_requests(), self.deadline):
-                assistant_helpers.log_assist_response_without_audio(resp)
-                if resp.event_type == END_OF_UTTERANCE:
-                    logging.info('End of audio request detected.')
-                    logging.info('Stopping recording.')
-                    call(["echo", "led_start_pattern{pattern:16}"])
-                    # call(["adk-message-send", "led_start_pattern{pattern:16}"])
+        for resp in self.assistant.Assist(iter_log_assist_requests(), self.deadline):
+            assistant_helpers.log_assist_response_without_audio(resp)
+            if resp.event_type == END_OF_UTTERANCE:
+                logging.info('End of audio request detected.')
+                logging.info('Stopping recording.')
+                call(["echo", "led_start_pattern{pattern:16}"])
+                # call(["adk-message-send", "led_start_pattern{pattern:16}"])
+                self.conversation_stream.stop_recording()
+            if resp.speech_results:
+                logging.info('Transcript of user request: "%s".', ' '.join(r.transcript for r in resp.speech_results))
+            if len(resp.audio_out.audio_data) > 0:
+                if not self.conversation_stream.playing:
                     self.conversation_stream.stop_recording()
-                if resp.speech_results:
-                    logging.info('Transcript of user request: "%s".', ' '.join(r.transcript for r in resp.speech_results))
-                if len(resp.audio_out.audio_data) > 0:
-                    if not self.conversation_stream.playing:
-                        self.conversation_stream.stop_recording()
-                        self.conversation_stream.start_playback()
-                        logging.info('Playing assistant response.')
-                        call(["echo", "led_start_pattern{pattern:2}"])
-                        # call(["adk-message-send", "led_start_pattern{pattern:2}"])
-                    self.conversation_stream.write(resp.audio_out.audio_data)
-                if resp.dialog_state_out.conversation_state:
-                    conversation_state = resp.dialog_state_out.conversation_state
-                    logging.debug('Updating conversation state.')
-                    self.conversation_state = conversation_state
-                if resp.dialog_state_out.volume_percentage != 0:
-                    volume_percentage = resp.dialog_state_out.volume_percentage
-                    logging.info('Setting volume to %s%%', volume_percentage)
-                    self.conversation_stream.volume_percentage = volume_percentage
-                if resp.dialog_state_out.microphone_mode == DIALOG_FOLLOW_ON:
-                    continue_conversation = True
-                    logging.info('Expecting follow-on query from user.')
-                elif resp.dialog_state_out.microphone_mode == CLOSE_MICROPHONE:
-                    continue_conversation = False
+                    self.conversation_stream.start_playback()
+                    logging.info('Playing assistant response.')
+                    call(["echo", "led_start_pattern{pattern:2}"])
+                    # call(["adk-message-send", "led_start_pattern{pattern:2}"])
+                self.conversation_stream.write(resp.audio_out.audio_data)
+            if resp.dialog_state_out.conversation_state:
+                conversation_state = resp.dialog_state_out.conversation_state
+                logging.debug('Updating conversation state.')
+                self.conversation_state = conversation_state
+            if resp.dialog_state_out.volume_percentage != 0:
+                volume_percentage = resp.dialog_state_out.volume_percentage
+                logging.info('Setting volume to %s%%', volume_percentage)
+                self.conversation_stream.volume_percentage = volume_percentage
+            if resp.dialog_state_out.microphone_mode == DIALOG_FOLLOW_ON:
+                continue_conversation = True
+                logging.info('Expecting follow-on query from user.')
+            elif resp.dialog_state_out.microphone_mode == CLOSE_MICROPHONE:
+                continue_conversation = False
 
-                logging.info('Finished playing assistant response.')
-                call(["echo", "led_indicate_direction_pattern{pattern:17,direction:0}"])
-                # call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
-                self.conversation_stream.stop_playback()
-                return continue_conversation
+        logging.info('Finished playing assistant response.')
+        call(["echo", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+        # call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+        self.conversation_stream.stop_playback()
+        return continue_conversation
+
     def gen_assist_requests(self):
         """Yields: AssistRequest messages to send to the API."""
 
