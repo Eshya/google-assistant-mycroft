@@ -7,7 +7,7 @@ grpc_datas = collect_data_files('grpc')
 
 a = Analysis(['gva-mycroft.py'],
              pathex=['.'],
-             binaries=[('/usr/lib/x86_64-linux-gnu/libxcb.so.1','.')],
+             binaries=[('/usr/lib/aarch64-linux-gnu/libxcb.so.1','.')],
              datas=grpc_datas,
              hiddenimports=[],
              hookspath=[],

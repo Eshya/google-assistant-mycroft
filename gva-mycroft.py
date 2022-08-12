@@ -98,8 +98,8 @@ class SampleAssistant(object):
             if resp.event_type == END_OF_UTTERANCE:
                 logging.info('End of audio request detected.')
                 logging.info('Stopping recording.')
-                call(["echo", "led_start_pattern{pattern:16}"])
-                # call(["adk-message-send", "led_start_pattern{pattern:16}"])
+                #call(["echo", "led_start_pattern{pattern:16}"])
+                call(["adk-message-send", "led_start_pattern{pattern:16}"])
                 self.conversation_stream.stop_recording()
             if resp.speech_results:
                 logging.info('Transcript of user request: "%s".', ' '.join(r.transcript for r in resp.speech_results))
@@ -108,8 +108,8 @@ class SampleAssistant(object):
                     self.conversation_stream.stop_recording()
                     self.conversation_stream.start_playback()
                     logging.info('Playing assistant response.')
-                    call(["echo", "led_start_pattern{pattern:2}"])
-                    # call(["adk-message-send", "led_start_pattern{pattern:2}"])
+                    # call(["echo", "led_start_pattern{pattern:2}"])
+                    call(["adk-message-send", "led_start_pattern{pattern:2}"])
                 self.conversation_stream.write(resp.audio_out.audio_data)
             if resp.dialog_state_out.conversation_state:
                 conversation_state = resp.dialog_state_out.conversation_state
@@ -126,8 +126,8 @@ class SampleAssistant(object):
                 continue_conversation = False
 
         logging.info('Finished playing assistant response.')
-        call(["echo", "led_indicate_direction_pattern{pattern:17,direction:0}"])
-        # call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+        # call(["echo", "led_indicate_direction_pattern{pattern:17,direction:0}"])
+        call(["adk-message-send", "led_indicate_direction_pattern{pattern:17,direction:0}"])
         self.conversation_stream.stop_playback()
         return continue_conversation
 
@@ -196,7 +196,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG if verbose else logging.INFO)
     # Load OAuth 2.0 credentials.
     try:
-        with open('/data/gva-mycroft.json', 'r') as json_file:
+        with open('/home/eshya/Documents/smartSpeaker/google-assistant/gva-mycroft.json', 'r') as json_file:
             gva_config = json.load(json_file)
             project_id = gva_config["project_id"]
             device_model_id = gva_config["device_model_id"]
@@ -300,8 +300,8 @@ def main():
         with SampleAssistant(lang, device_model_id, device_id, conversation_stream, grpc_channel, grpc_deadline) as assistant:
             wait_for_user_trigger = True
             global waiting
-            call(["echo", "led_start_pattern{pattern:7}"])
-            # call(["adk-message-send", "led_start_pattern{pattern:7}"])
+            #call(["echo", "led_start_pattern{pattern:7}"])
+            call(["adk-message-send", "led_start_pattern{pattern:7}"])
             while True:
                 if wait_for_user_trigger:
                     logging.info("Waiting Wake Word")
