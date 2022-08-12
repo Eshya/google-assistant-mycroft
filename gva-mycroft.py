@@ -82,8 +82,8 @@ class SampleAssistant(object):
         self.conversation_stream.volume_percentage = 100
         self.conversation_stream.start_recording()
         logging.info('Recording audio request.')
-        call(["echo", "led_indicate_direction_pattern{pattern:1,direction:50}"])
-        # call(["adk-message-send", "led_indicate_direction_pattern{pattern:1,direction:50}"])
+        # call(["echo", "led_indicate_direction_pattern{pattern:1,direction:50}"])
+        call(["adk-message-send", "led_indicate_direction_pattern{pattern:1,direction:50}"])
 
         def iter_log_assist_requests():
             for c in self.gen_assist_requests():
@@ -190,6 +190,7 @@ def main():
     audio_iter_size = audio_helpers.DEFAULT_AUDIO_ITER_SIZE
     audio_block_size = audio_helpers.DEFAULT_AUDIO_DEVICE_BLOCK_SIZE
     audio_flush_size = audio_helpers.DEFAULT_AUDIO_DEVICE_FLUSH_SIZE
+    DEFAULT_DIRECTION = 0
 
     # Setup logging.
     verbose = False
@@ -231,7 +232,9 @@ def main():
             sample_rate=audio_sample_rate,
             sample_width=audio_sample_width,
             block_size=audio_block_size,
-            flush_size=audio_flush_size
+            flush_size=audio_flush_size,
+            direction=DEFAULT_DIRECTION
+
         )
     )
     audio_sink = audio_device = (
@@ -239,7 +242,8 @@ def main():
             sample_rate=audio_sample_rate,
             sample_width=audio_sample_width,
             block_size=audio_block_size,
-            flush_size=audio_flush_size
+            flush_size=audio_flush_size,
+            direction=DEFAULT_DIRECTION
         )
     )
     # Create conversation stream with the given audio source and sink.
